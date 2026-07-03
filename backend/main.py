@@ -4,6 +4,7 @@ from typing import Literal
 from dotenv import load_dotenv
 from openai import OpenAI
 import os
+from fastapi.middleware.cors import CORSMiddleware
 
 
 load_dotenv()
@@ -76,7 +77,19 @@ class ChatResponse(BaseModel):
 
 app = FastAPI(title="AI 여행사 고객센터 챗봇 API")
 
-@app.post("/api/chat", response_model=ChatResponse)    
+#CORS(교차 출처 리소스 공유)는 보안상의 이유로 브라우저가 다른 도메인의 자원에 접근하는 것을 차단하는 정책(SOP)을 예외적으로 허용해 주는 HTTP 기반 메커니즘
+#CORSMiddleware : 누가 내 서버에 접근해도 되는지"를 검사한다
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        FRONTEND_ORIGIN,
+    ],
+    allow_credentials=True,  #쿠키나 로그인 정보를 허용할지 여부
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.post("/api/chat", response_model=ChatResponse)
 def chat(request : ChatRequest):
     # 1. 프론트에서 받은 이전 대화 중 최근 대화만 사용
     history = request.messages[-MAX_HISTORY_MESSAGES:]
